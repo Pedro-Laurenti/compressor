@@ -8,20 +8,26 @@ def convert_pdf_to_images(input_pdf, output_folder):
     pdf_document = fitz.open(input_pdf)
     num_pages = len(pdf_document)
     
+    # Definir o formato de numeração com zeros à esquerda
+    num_digits = len(str(num_pages))
+    
     with tqdm(total=num_pages, desc='Convertendo páginas', bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} {percentage:3.0f}%') as pbar:
         for page_num in range(num_pages):
             page = pdf_document.load_page(page_num)
             pix = page.get_pixmap(dpi=80)
-            output_image_path = os.path.join(output_folder, f"page_{page_num + 1}.png")
+            
+            # Nomear a imagem com zeros à esquerda
+            output_image_path = os.path.join(output_folder, f"page_{str(page_num + 1).zfill(num_digits)}.png")
             pix.save(output_image_path)
             pbar.update(1)
     
     return num_pages
 
-
 def create_pdf_from_images(image_folder, output_pdf):
+    # Ordenar as imagens de forma correta
     images = sorted([os.path.join(image_folder, img) for img in os.listdir(image_folder) if img.endswith('.png')])
     document = fitz.open()
+    
     for image in images:
         img = fitz.open(image)
         rect = img[0].rect
@@ -29,6 +35,7 @@ def create_pdf_from_images(image_folder, output_pdf):
         img_pdf = fitz.open("pdf", pdfbytes)
         page = document.new_page(width=rect.width, height=rect.height)
         page.show_pdf_page(rect, img_pdf, 0)
+    
     document.save(output_pdf)
 
 def compress_pdf(input_file_path, output_file_path):
